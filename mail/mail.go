@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/mail"
 	"net/smtp"
-	"os"
 	"strings"
 )
 
@@ -47,15 +46,15 @@ func (r *Request) parseTemplate(templateData string, data interface{}) error {
 }
 
 // SendingEmail is function to sending email contain html tag with params data
-func SendingEmail(mailTo string, subjectEmail string, body string, templateData interface{}) error {
-	r := NewRequest([]string{mailTo}, subjectEmail, "")
+func SendingEmail(to string, subjectEmail string, body string, templateData interface{}) error {
+	r := NewRequest([]string{to}, subjectEmail, "")
 	err := r.parseTemplate(body, templateData)
 	if err != nil {
 		log.Printf("parsing template error : %s", err)
 		return err
 	}
 
-	ok, err := r.SendEmail(mailTo)
+	ok, err := r.SendEmail(to)
 	if err != nil {
 		log.Printf("smtp error: %s", err)
 		return err
@@ -76,13 +75,13 @@ func encodeRFC2047(String string) string {
 
 // SendEmail is process send email with destination email
 func (r *Request) SendEmail(to string) (bool, error) {
-	fromEnv := os.Getenv("SMTP_EMAIL")
-	smtpName := os.Getenv("SMTP_HOST")
-	smtpPort := os.Getenv("SMTP_PORT")
-	pass := os.Getenv("SMTP_PASSWORD")
-	mailName := os.Getenv("SMTP_NAME")
+	from := "xxx@gmail.com"
+	host := "smtp.gmail.com"
+	port := "587"
+	pass := "Y9sa8jPassword@"
+	name := "Test"
 
-	sender := mail.Address{mailName, fromEnv}
+	sender := mail.Address{name, from}
 	header := make(map[string]string)
 	header["From"] = sender.String()
 	header["To"] = to
@@ -97,11 +96,11 @@ func (r *Request) SendEmail(to string) (bool, error) {
 	}
 	message += "\r\n" + base64.StdEncoding.EncodeToString([]byte(r.body))
 
-	addr := smtpName + ":" + smtpPort
+	addr := host + ":" + port
 
-	auth = smtp.PlainAuth("", sender.Address, pass, smtpName)
+	auth = smtp.PlainAuth("", sender.Address, pass, host)
 
-	err := smtp.SendMail(addr, auth, fromEnv, r.to, []byte(message))
+	err := smtp.SendMail(addr, auth, from, r.to, []byte(message))
 	if err != nil {
 		return false, err
 	}
